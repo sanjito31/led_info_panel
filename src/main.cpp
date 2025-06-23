@@ -2,11 +2,8 @@
 #include <time.h>
 #include <WiFi.h>
 #include <secrets.h>
-
-// RGB Panel Info
-#define PANEL_W         64
-#define PANEL_H         32
-#define PANEL_CHAIN     1
+#include <ArduinoJson.h>
+#include <HTTPClient.h>
 
 // Serial BAUD Rate
 #define BAUD            115200
@@ -24,6 +21,53 @@ const long GMT_OFFSET   = -(5 * 3600);
 
 // MatrixPanel_I2S_DMA display
 MatrixPanel_I2S_DMA *dma_display    = nullptr;
+
+// // Weather Global Vars
+// const char* WEATHER_SERVER_URL = "http://192.168.31.208:5001/api";
+
+class WeatherInfo {
+  public:
+    String temp;
+    String temp_max;
+    String temp_min;
+    String description;
+
+    bool fetch(const char* url) {
+      // HTTP Client
+      HTTPClient http;
+      http.begin(url);
+      int httpCode = http.GET();
+      if(httpCode > 0 ) {
+        if(httpCode == HTTP_CODE_OK) {
+          JsonDocument doc;
+          DeserializationError err = deserializeJson(doc, http.getStream());
+
+          if(!err) {
+            temp           = doc["temp"].as<String>();
+            description    = doc["description"].as<String>();
+            temp_max       = doc["temp_max"].as<String>();
+            temp_min       = doc["temp_min"].as<String>();
+          } else {
+            Serial.println("JSON parse failed: ");
+            Serial.println(err.c_str());
+            return false;
+          }
+        } else {
+          Serial.printf("Server responded %d\n", httpCode);
+          return false;
+        } 
+      } else {
+        Serial.printf("HTTP GET failed: %s\n", http.errorToString(httpCode).c_str());
+        return false;
+      }
+      http.end();
+
+      return true;
+    }
+};
+
+// Global weather obj declaration
+WeatherInfo weather;
 
 // Setup 
 void setup() {
@@ -47,39 +91,59 @@ void setup() {
   }
 
   digitalWrite(LED_BUILTIN, HIGH);
-  Serial.println("WiFi connected!");
+  Serial.println("\nWi-Fi connected. IP = " + WiFi.localIP().toString());
 
   // Get Time
+  Serial.println("Getting time...");
   configTime(GMT_OFFSET, DST_OFFSET, TIME_SERVER);
   if(!getLocalTime(&timeinfo)) {
     Serial.println("Failed to get time.");
     for(;;);
   }
+  Serial.println("Time acquired");
 
-  //display.println(&timeinfo, "%I:%M:%S");
   // Initialize RGB LED Matrix Display
+  Serial.println("Initializing display...");
   HUB75_I2S_CFG mxconfig(
-    PANEL_W,
-    PANEL_H,
-    PANEL_CHAIN
+    MATRIX_WIDTH,
+    MATRIX_HEIGHT,
+    CHAIN_LENGTH
   );
   dma_display = new MatrixPanel_I2S_DMA(mxconfig);
   dma_display->begin();
-  dma_display->setBrightness8(90);
+  dma_display->setBrightness8(50);
   dma_display->clearScreen();
 
+  // Get weather info
+  if(weather.fetch(SELF_HOSTED_API)) {
+    Serial.println("Weather data fetch successful.");
+  }
 }
+
+static uint32_t last = 0;
+static uint32_t last_weather = 0;
 
 void loop() {
 
-  if(getLocalTime(&timeinfo)) {
+  // ArduinoOTA.handle();
+
+  if(getLocalTime(&timeinfo) && (millis() - last > 1000)) {
+    last = millis();
+    // Serial.println(&timeinfo, "%I:%M:%S");
+    Serial.println(weather.temp);
     dma_display->clearScreen();
-    dma_display->setTextSize(2);
+    dma_display->setTextSize(1);
     dma_display->setCursor(0,0);
     dma_display->setTextWrap(true);
-    dma_display->setTextColor(0);
-    dma_display->println(&timeinfo, "%I:%M:%S");
+    dma_display->color565(255, 255, 255);
+    // dma_display->println(&timeinfo, "%I:%M:%S");
+    dma_display->print(weather.temp);
+    dma_display->println("F");
+    dma_display->print("H:");
+    dma_display->println(weather.temp_max);
+    dma_display->print("L:");
+    dma_display->println(weather.temp_min);
+    dma_display->println(weather.description);
   }
-  delay(1000);
 
 }
