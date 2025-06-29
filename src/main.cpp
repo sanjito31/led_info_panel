@@ -4,6 +4,8 @@
 #include <secrets.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <Arduino.h>
+#include <weather.hpp>
 
 // Serial BAUD Rate
 #define BAUD            115200
@@ -25,49 +27,10 @@ MatrixPanel_I2S_DMA *dma_display    = nullptr;
 // // Weather Global Vars
 // const char* WEATHER_SERVER_URL = "http://192.168.31.208:5001/api";
 
-class WeatherInfo {
-  public:
-    String temp;
-    String temp_max;
-    String temp_min;
-    String description;
 
-    bool fetch(const char* url) {
-      // HTTP Client
-      HTTPClient http;
-      http.begin(url);
-      int httpCode = http.GET();
-      if(httpCode > 0 ) {
-        if(httpCode == HTTP_CODE_OK) {
-          JsonDocument doc;
-          DeserializationError err = deserializeJson(doc, http.getStream());
-
-          if(!err) {
-            temp           = doc["temp"].as<String>();
-            description    = doc["description"].as<String>();
-            temp_max       = doc["temp_max"].as<String>();
-            temp_min       = doc["temp_min"].as<String>();
-          } else {
-            Serial.println("JSON parse failed: ");
-            Serial.println(err.c_str());
-            return false;
-          }
-        } else {
-          Serial.printf("Server responded %d\n", httpCode);
-          return false;
-        } 
-      } else {
-        Serial.printf("HTTP GET failed: %s\n", http.errorToString(httpCode).c_str());
-        return false;
-      }
-      http.end();
-
-      return true;
-    }
-};
 
 // Global weather obj declaration
-WeatherInfo weather;
+Weather weather;
 
 // Setup 
 void setup() {
@@ -93,15 +56,6 @@ void setup() {
   digitalWrite(LED_BUILTIN, HIGH);
   Serial.println("\nWi-Fi connected. IP = " + WiFi.localIP().toString());
 
-  // Get Time
-  Serial.println("Getting time...");
-  configTime(GMT_OFFSET, DST_OFFSET, TIME_SERVER);
-  if(!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to get time.");
-    for(;;);
-  }
-  Serial.println("Time acquired");
-
   // Initialize RGB LED Matrix Display
   Serial.println("Initializing display...");
   HUB75_I2S_CFG mxconfig(
@@ -114,10 +68,41 @@ void setup() {
   dma_display->setBrightness8(50);
   dma_display->clearScreen();
 
-  // Get weather info
-  if(weather.fetch(SELF_HOSTED_API)) {
-    Serial.println("Weather data fetch successful.");
+  // ************ INITIALIZE ALL API CALL OBJECTS HERE ************ //
+
+  // ----------- Get Time ----------- //
+  Serial.println("Getting time...");
+  configTime(GMT_OFFSET, DST_OFFSET, TIME_SERVER);
+  if(!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to get time.");
+    for(;;);
   }
+  Serial.println("Time acquired");
+
+  // ----------- Get Weather ----------- //
+  try {
+    weather.fetch(SELF_HOSTED_API);
+    Serial.println("Weather data fetch successful.");
+  } catch(const std::system_error &e) {
+    Serial.print("Network error");
+    Serial.println(e.what());
+    for(;;);
+  } catch(const std::runtime_error&e) {
+    Serial.println(e.what());
+    for(;;);
+  } catch(const std::invalid_argument&e) {
+    Serial.println(e.what());
+    for(;;);
+  }
+
+  // ----------- Get MTA ----------- //
+
+
+  // ----------- Get Spotify ----------- //
+
+
+  // ----------- Get F1 ----------- //
+
 }
 
 static uint32_t last = 0;
@@ -130,20 +115,20 @@ void loop() {
   if(getLocalTime(&timeinfo) && (millis() - last > 1000)) {
     last = millis();
     // Serial.println(&timeinfo, "%I:%M:%S");
-    Serial.println(weather.temp);
+    Serial.println(weather.getTemp());
     dma_display->clearScreen();
     dma_display->setTextSize(1);
     dma_display->setCursor(0,0);
     dma_display->setTextWrap(true);
     dma_display->color565(255, 255, 255);
     // dma_display->println(&timeinfo, "%I:%M:%S");
-    dma_display->print(weather.temp);
+    dma_display->print(weather.getTemp());
     dma_display->println("F");
     dma_display->print("H:");
-    dma_display->println(weather.temp_max);
+    dma_display->println(weather.getMaxTemp());
     dma_display->print("L:");
-    dma_display->println(weather.temp_min);
-    dma_display->println(weather.description);
+    dma_display->println(weather.getMinTemp());
+    dma_display->println(weather.getDescription());
   }
 
 }
