@@ -7,3 +7,4 @@
 .env
 secrets.h
 .DS_Store
+test/*

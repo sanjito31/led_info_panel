@@ -6,7 +6,7 @@
 #include <HTTPClient.h>
 #include <Arduino.h>
 #include <weather.hpp>
-// #include <mta.hpp>
+#include <mta.hpp>
 
 // Serial BAUD Rate
 #define BAUD            115200
@@ -32,6 +32,13 @@ MatrixPanel_I2S_DMA *dma_display    = nullptr;
 
 // Global weather obj declaration
 Weather weather;
+
+// Global MTA obj declaration
+MTA mta;
+SubwayLine Fline("F");
+SubwayLine Mline("M");
+SubwayLine Bline("B");
+SubwayLine Dline("D");
 
 // Setup 
 void setup() {
@@ -99,8 +106,27 @@ void setup() {
   }
 
   // ----------- Get MTA ----------- //
-  // const char* mtaUrl = "http://192.168.31.205:8000/api/mta";
-  // MTA mta;
+  const char* mtaUrl = "http://192.168.31.205:8000/api/mta";
+
+  try {
+    mta.fetch(mtaUrl);
+    Serial.println("MTA data fetch successful.");
+  } catch(const std::system_error &e) {
+    Serial.print("Network error");
+    Serial.println(e.what());
+    for(;;);
+  } catch(const std::runtime_error&e) {
+    Serial.println(e.what());
+    for(;;);
+  } catch(const std::invalid_argument&e) {
+    Serial.println(e.what());
+    for(;;);
+  }
+
+  Fline = mta.getLine("F");
+  Mline = mta.getLine("M");
+  Bline = mta.getLine("B");
+  Dline = mta.getLine("D");
 
 
 
@@ -122,20 +148,45 @@ void loop() {
   if(getLocalTime(&timeinfo) && (millis() - last > 1000)) {
     last = millis();
     // Serial.println(&timeinfo, "%I:%M:%S");
-    Serial.println(weather.getTemp());
+    // Serial.println(weather.getTemp());
     dma_display->clearScreen();
     dma_display->setTextSize(1);
     dma_display->setCursor(0,0);
     dma_display->setTextWrap(true);
     dma_display->color565(255, 255, 255);
+    const String name = Fline.getLineName();
+    if (name.compareTo("") == 0) {
+      dma_display->println("No line name");
+    } else {
+      dma_display->println(name);
+    }
+    
     // dma_display->println(&timeinfo, "%I:%M:%S");
-    dma_display->print(weather.getTemp());
-    dma_display->println("F");
-    dma_display->print("H:");
-    dma_display->println(weather.getMaxTemp());
-    dma_display->print("L:");
-    dma_display->println(weather.getMinTemp());
-    dma_display->println(weather.getDescription());
+    // dma_display->print(weather.getTemp());
+    // dma_display->println("F");
+    // dma_display->print("H:");
+    // dma_display->println(weather.getMaxTemp());
+    // dma_display->print("L:");
+    // dma_display->println(weather.getMinTemp());
+    // dma_display->println(weather.getDescription());
+    dma_display->println(Fline.getStationName());
+    int count = 0;
+    for(int v: Fline.getUptownWaits()) {
+      if (count++ >= 3) { break; }
+      if(v == 0) { continue; }
+      dma_display->print(v);
+      dma_display->print(" ");
+    }
+    dma_display->println();
+    count = 0;
+    for(int v: Fline.getDowntownWaits()) {
+      if (count++ >= 3) { break; }
+      if(v == 0) { continue; }
+      dma_display->print(v);
+      dma_display->print(" ");
+    }
+    dma_display->println();
+
   }
 
 }
