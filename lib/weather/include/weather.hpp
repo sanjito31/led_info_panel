@@ -11,7 +11,7 @@ class Weather {
         Weather(String temp, String maxTemp, String minTemp, String desc);
 
         // Main functions
-        bool    fetch(const char* url);
+        void    fetch(const char* url);
 
         // Setters
         void    setTemp(String temp);

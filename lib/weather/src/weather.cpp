@@ -17,7 +17,7 @@ Weather::Weather(String temp, String maxTemp, String minTemp, String desc) {
 }
 
 // fetch weather via URL and update internal variables
-bool Weather::fetch(const char* url) {
+void Weather::fetch(const char* url) {
     // HTTP Client
     HTTPClient http;
     http.begin(url);
@@ -30,7 +30,7 @@ bool Weather::fetch(const char* url) {
 
             if(!err) {
                 this->setTemp(doc["temp"].as<String>());
-                this->setDescription(doc["temp"].as<String>());
+                this->setDescription(doc["description"].as<String>());
                 this->setMaxTemp(doc["temp_max"].as<String>());
                 this->setMinTemp(doc["temp_min"].as<String>());
             } else {
@@ -51,8 +51,6 @@ bool Weather::fetch(const char* url) {
         // return false;
     }
     http.end();
-
-    return true;
 }
 
 // Setters

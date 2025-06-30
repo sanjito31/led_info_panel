@@ -6,6 +6,7 @@
 #include <HTTPClient.h>
 #include <Arduino.h>
 #include <weather.hpp>
+// #include <mta.hpp>
 
 // Serial BAUD Rate
 #define BAUD            115200
@@ -80,8 +81,10 @@ void setup() {
   Serial.println("Time acquired");
 
   // ----------- Get Weather ----------- //
+  const char* weatherUrl = "http://192.168.31.205:8000/api/weather";
+
   try {
-    weather.fetch(SELF_HOSTED_API);
+    weather.fetch(weatherUrl);
     Serial.println("Weather data fetch successful.");
   } catch(const std::system_error &e) {
     Serial.print("Network error");
@@ -96,12 +99,16 @@ void setup() {
   }
 
   // ----------- Get MTA ----------- //
+  // const char* mtaUrl = "http://192.168.31.205:8000/api/mta";
+  // MTA mta;
+
 
 
   // ----------- Get Spotify ----------- //
 
 
   // ----------- Get F1 ----------- //
+  // const char* f1Url = "http://192.168.31.205:8000/api/f1/drivers";
 
 }
 
