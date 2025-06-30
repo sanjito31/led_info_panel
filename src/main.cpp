@@ -146,46 +146,16 @@ void loop() {
   // ArduinoOTA.handle();
 
   if(getLocalTime(&timeinfo) && (millis() - last > 1000)) {
+    
     last = millis();
-    // Serial.println(&timeinfo, "%I:%M:%S");
-    // Serial.println(weather.getTemp());
+
     dma_display->clearScreen();
     dma_display->setTextSize(1);
     dma_display->setCursor(0,0);
     dma_display->setTextWrap(true);
     dma_display->color565(255, 255, 255);
-    const String name = Fline.getLineName();
-    if (name.compareTo("") == 0) {
-      dma_display->println("No line name");
-    } else {
-      dma_display->println(name);
-    }
-    
-    // dma_display->println(&timeinfo, "%I:%M:%S");
-    // dma_display->print(weather.getTemp());
-    // dma_display->println("F");
-    // dma_display->print("H:");
-    // dma_display->println(weather.getMaxTemp());
-    // dma_display->print("L:");
-    // dma_display->println(weather.getMinTemp());
-    // dma_display->println(weather.getDescription());
-    dma_display->println(Fline.getStationName());
-    int count = 0;
-    for(int v: Fline.getUptownWaits()) {
-      if (count++ >= 3) { break; }
-      if(v == 0) { continue; }
-      dma_display->print(v);
-      dma_display->print(" ");
-    }
-    dma_display->println();
-    count = 0;
-    for(int v: Fline.getDowntownWaits()) {
-      if (count++ >= 3) { break; }
-      if(v == 0) { continue; }
-      dma_display->print(v);
-      dma_display->print(" ");
-    }
-    dma_display->println();
+
+    Fline.printSubwayLine(dma_display);
 
   }
 

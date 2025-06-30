@@ -4,11 +4,15 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <map>
+#include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 
 class SubwayLine {
     public:
         // Constructor
         explicit SubwayLine(const String& name);
+
+        // Printing function
+        void                printSubwayLine(MatrixPanel_I2S_DMA* display);
 
         // Setters
         void                setLineName(String name);

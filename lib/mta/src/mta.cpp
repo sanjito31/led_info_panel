@@ -5,6 +5,36 @@ SubwayLine::SubwayLine(const String& name)
     : lineName_(name)
 {}
 
+// Print subway line info
+void SubwayLine::printSubwayLine(MatrixPanel_I2S_DMA* display) {
+
+    const String name = this->getLineName();
+    if (name.compareTo("") == 0) {
+      display->print("NA\\");
+    } else {
+      display->print(name);
+    }
+    display->print("|");
+    
+    display->println(this->getStationName());
+    int count = 0;
+    for(int v: this->getUptownWaits()) {
+      if (count++ >= 3) { break; }
+      if(v == 0) { continue; }
+      display->print(v);
+      display->print(" ");
+    }
+    display->println();
+    count = 0;
+    for(int v: this->getDowntownWaits()) {
+      if (count++ >= 3) { break; }
+      if(v == 0) { continue; }
+      display->print(v);
+      display->print(" ");
+    }
+    display->println();
+}
+
 // Setters
 void                SubwayLine::setLineName(String name) { lineName_ = name; }
 void                SubwayLine::setStationName(String name) { stationName_ = name; }
@@ -20,8 +50,12 @@ String&             SubwayLine::getStationName() { return stationName_; }
 std::vector<int>&   SubwayLine::getUptownWaits() { return uptownWaits_; }
 std::vector<int>&   SubwayLine::getDowntownWaits() { return downtownWaits_; }
 
-// MTA
 
+
+
+
+
+// MTA
 SubwayLine& MTA::getLine(const String& name) {
     return lines_.at(name);  // throws if missing
 }
