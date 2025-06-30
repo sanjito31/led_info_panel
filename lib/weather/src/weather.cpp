@@ -53,6 +53,23 @@ void Weather::fetch(const char* url) {
     http.end();
 }
 
+void Weather::printWeather(MatrixPanel_I2S_DMA* display) {
+
+    display->print(this->getTemp());
+    display->println("F");
+    
+    display->print("H: ");
+    display->print(this->getMaxTemp());
+    display->println("F");
+
+    display->print("L: ");
+    display->println(this->getMinTemp());
+    display->println("F");
+
+    display->setTextWrap(false);
+    display->println(this->getDescription());
+}
+
 // Setters
 void    Weather::setTemp(String temp) {
     this->temp_ = temp;

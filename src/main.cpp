@@ -146,7 +146,7 @@ void loop() {
   // ArduinoOTA.handle();
 
   if(getLocalTime(&timeinfo) && (millis() - last > 1000)) {
-    
+
     last = millis();
 
     dma_display->clearScreen();
@@ -155,7 +155,16 @@ void loop() {
     dma_display->setTextWrap(true);
     dma_display->color565(255, 255, 255);
 
-    Fline.printSubwayLine(dma_display);
+
+
+    // if(millis() - ) {
+
+    // }
+
+    // if(millis() -)
+
+    // Fline.printSubwayLine(dma_display);
+    weather.printWeather(dma_display);
 
   }
 

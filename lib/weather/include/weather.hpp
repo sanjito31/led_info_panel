@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 
 class Weather {
     public:
@@ -12,6 +13,7 @@ class Weather {
 
         // Main functions
         void    fetch(const char* url);
+        void    printWeather(MatrixPanel_I2S_DMA* display);
 
         // Setters
         void    setTemp(String temp);
