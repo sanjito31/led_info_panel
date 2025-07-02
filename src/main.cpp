@@ -7,6 +7,9 @@
 #include <Arduino.h>
 #include <weather.hpp>
 #include <mta.hpp>
+#include <Fonts/TomThumb.h>
+// #include "../.pio/libdeps/esp32doit-devkit-v1/ESP32 HUB75 LED MATRIX PANEL DMA Display/examples/BitmapIcons/Dhole_weather_icons32px.h"
+#include <Dhole_weather_icons32px.h>
 
 // Serial BAUD Rate
 #define BAUD            115200
@@ -75,6 +78,7 @@ void setup() {
   dma_display->begin();
   dma_display->setBrightness8(50);
   dma_display->clearScreen();
+  dma_display->setFont(&TomThumb);
 
   // ************ INITIALIZE ALL API CALL OBJECTS HERE ************ //
 
@@ -139,7 +143,12 @@ void setup() {
 }
 
 static uint32_t last = 0;
-static uint32_t last_weather = 0;
+// static uint32_t last_weather = 0;
+static uint32_t last_card = 0;
+static uint32_t card = 1;
+static uint32_t num_cards = 3;
+
+static uint32_t interval = 10000;
 
 void loop() {
 
@@ -151,20 +160,33 @@ void loop() {
 
     dma_display->clearScreen();
     dma_display->setTextSize(1);
-    dma_display->setCursor(0,0);
+    dma_display->setCursor(1,5);
     dma_display->setTextWrap(true);
     dma_display->color565(255, 255, 255);
 
+    if((millis() - last_card) > interval) {
+      last_card = millis();
+      if(card >= num_cards) {
+        card = 1;
+      } else {
+        card++;
+      }
+    }
 
-
-    // if(millis() - ) {
-
-    // }
-
-    // if(millis() -)
+    switch (card) {
+      case 1:
+        dma_display->println(&timeinfo, "%I:%M:%S");
+        break;
+      case 2:
+        weather.printWeather(dma_display);
+        break;
+      case 3:
+        Fline.printSubwayLine(dma_display);
+        break;
+    }
 
     // Fline.printSubwayLine(dma_display);
-    weather.printWeather(dma_display);
+    // weather.printWeather(dma_display);
 
   }
 

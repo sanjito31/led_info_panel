@@ -63,7 +63,7 @@ void Weather::printWeather(MatrixPanel_I2S_DMA* display) {
     display->println("F");
 
     display->print("L: ");
-    display->println(this->getMinTemp());
+    display->print(this->getMinTemp());
     display->println("F");
 
     display->setTextWrap(false);
