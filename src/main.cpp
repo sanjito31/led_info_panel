@@ -34,9 +34,11 @@ MatrixPanel_I2S_DMA *dma_display    = nullptr;
 
 
 // Global weather obj declaration
+const char* weatherUrl = "http://192.168.31.205:8000/api/weather";
 Weather weather;
 
 // Global MTA obj declaration
+const char* mtaUrl = "http://192.168.31.205:8000/api/mta";
 MTA mta;
 SubwayLine Fline("F");
 SubwayLine Mline("M");
@@ -92,7 +94,6 @@ void setup() {
   Serial.println("Time acquired");
 
   // ----------- Get Weather ----------- //
-  const char* weatherUrl = "http://192.168.31.205:8000/api/weather";
 
   try {
     weather.fetch(weatherUrl);
@@ -110,7 +111,6 @@ void setup() {
   }
 
   // ----------- Get MTA ----------- //
-  const char* mtaUrl = "http://192.168.31.205:8000/api/mta";
 
   try {
     mta.fetch(mtaUrl);
@@ -143,18 +143,19 @@ void setup() {
 }
 
 static uint32_t last = 0;
-// static uint32_t last_weather = 0;
+static uint32_t last_weather_call = 0;
+static uint32_t last_mta_call = 0;
 static uint32_t last_card = 0;
 static uint32_t card = 1;
 static uint32_t num_cards = 3;
 
-static uint32_t interval = 10000;
+static uint32_t interval = (10*1000);
 
 void loop() {
 
   // ArduinoOTA.handle();
 
-  if(getLocalTime(&timeinfo) && (millis() - last > 1000)) {
+  if(getLocalTime(&timeinfo) && (millis() - last > (1*1000))) {
 
     last = millis();
 
@@ -178,9 +179,17 @@ void loop() {
         dma_display->println(&timeinfo, "%I:%M:%S");
         break;
       case 2:
+        if((millis() - last_weather_call) > (5 * 60 * 1000)) {
+          last_weather_call = millis();
+          weather.fetch(weatherUrl);
+        }
         weather.printWeather(dma_display);
         break;
       case 3:
+        if((millis() - last_mta_call) > (1*60*1000)) {
+          last_mta_call = millis();
+          mta.fetch(mtaUrl);
+        }
         Fline.printSubwayLine(dma_display);
         break;
     }
